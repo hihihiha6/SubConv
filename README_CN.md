@@ -4,9 +4,9 @@
 
 ![license](https://img.shields.io/github/license/SubConv/SubConv) ![last commit](https://img.shields.io/github/last-commit/SubConv/SubConv)
 
-~~这个项目是面向所有Clash用户的订阅转换，如果你需要ZJU专版，请移步[SubConv 4 ZJU](https://github.com/SubConv/SubConv-4-ZJU)~~
+这是一个将订阅转换为 mihomo 兼容配置的项目。
 
-我们提供了一般用户的配置和ZJU专版的配置，可查看 [docs](https://subconv.is-sb.com) 了解如何使用对应的配置文件部署。
+仓库根目录下自带两套模板：`template/zju.yaml` 和 `template/general.yaml`。Web UI 默认使用 `zju`，API 在不传 `template` 查询参数时也默认使用 `zju`。仓库提供 `config.yaml.example` 作为默认运行时配置。
 
 ## 截图
 ![screenshot](assets/image.png)
@@ -22,7 +22,7 @@
 - 多机场用户提供了支持
 - 剩余流量和总流量的显示（单机场的时候才有用，需要你的机场和你用的Clash同时支持，已知Clash for Windows, Clash Verge, Stash, Clash Meta for Android等已支持）
 - 实现了订阅转换成 proxy-provider 的 api, (一般人也不会去用吧)
-- 支持配置文件
+- 支持模板文件
 
 ## 文档
 
@@ -32,12 +32,14 @@
 
 - `subconv/`：FastAPI 后端与转换逻辑
 - `api.py`：供 CLI 和 Vercel 使用的薄入口
+- `config.yaml.example`：运行时配置示例；用户改动应放在 `config.yaml`
+- `template/`：运行时 YAML 模板（默认 `zju.yaml`，可选 `general.yaml`）
 - `mainpage/`：Vue/Vite 前端
 - `docs/`：VitePress 文档站点，通过 GitHub Pages 独立部署
 
 本地常用命令：
 
-- 后端：`uv sync` 后执行 `uv run python api.py`
+- 后端：`uv sync` 后，如需自定义运行时参数就创建/修改 `config.yaml`，然后执行 `uv run python api.py`
 - 前端：`cd mainpage && bun install && bun run dev`
 - 文档：`cd docs && bun install && bun run dev`
 

@@ -4,9 +4,9 @@ English | [中文](README_CN.md)
 
 ![license](https://img.shields.io/github/license/SubConv/SubConv) ![last commit](https://img.shields.io/github/last-commit/SubConv/SubConv)
 
-~~This project is a subscription converter aiming to transform subscriptions to Clash format. If you need a ZJU version, please go to [SubConv 4 ZJU](https://github.com/SubConv/SubConv-4-ZJU)~~
+This project is a subscription converter aiming to transform subscriptions into mihomo-compatible configs.
 
-We provide configurations for general users and ZJU version, you can check [docs](https://subconv.is-sb.com) to learn how to deploy with the corresponding configuration file.
+We ship two built-in templates in the root `template/` directory: `zju.yaml` and `general.yaml`. The Web UI defaults to `zju`, and the API does the same when the `template` query parameter is omitted. The repository includes `config.yaml.example` as the default runtime config.
 
 ## Screenshot
 
@@ -23,7 +23,7 @@ We provide configurations for general users and ZJU version, you can check [docs
 - Support multiple airpots
 - Display remaining traffic and total traffic (only useful when you use a single airport, requires your airport and Clash to support it at the same time, Clash for Windows, Clash Verge, Stash, Clash Meta for Android, etc. are known to support it)
 - Implement the api of subscription conversion to proxy-provider (normal people won't use it)
-- Support configuration file
+- Support template files
 
 ## Docs
 
@@ -33,12 +33,14 @@ We provide configurations for general users and ZJU version, you can check [docs
 
 - `subconv/`: FastAPI backend and converter logic
 - `api.py`: thin entrypoint used by the CLI and Vercel
+- `config.yaml.example`: example runtime config; put user changes in `config.yaml`
+- `template/`: runtime YAML templates (`zju.yaml` is the default, `general.yaml` is the alternate)
 - `mainpage/`: Vue/Vite frontend
 - `docs/`: VitePress documentation site, deployed separately via GitHub Pages
 
 Local commands:
 
-- Backend: `uv sync` then `uv run python api.py`
+- Backend: `uv sync`, create/edit `config.yaml` if you need custom runtime settings, then `uv run python api.py`
 - Frontend: `cd mainpage && bun install && bun run dev`
 - Docs: `cd docs && bun install && bun run dev`
 
