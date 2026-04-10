@@ -1,5 +1,3 @@
-
-
 from modules.convert.util import RandUserAgent
 from modules.convert.util import get
 from modules.convert.util import uniqueName
@@ -11,7 +9,19 @@ from modules.convert.v import handleVShareLink
 import json
 import base64
 import urllib.parse as urlparse
-import distutils.util
+
+
+from pydantic import TypeAdapter
+
+_bool_adapter = TypeAdapter(bool)
+
+
+def _strtobool(val):
+    """Replacement for distutils.util.strtobool (removed in Python 3.12)."""
+    try:
+        return _bool_adapter.validate_python(val)
+    except Exception:
+        return False
 
 
 async def ConvertsV2Ray(buf):
@@ -68,8 +78,7 @@ async def ConvertsV2Ray(buf):
                 down = query.get("downmbps")
             hysteria["up"] = up
             hysteria["down"] = down
-            hysteria["skip-cert-verify"] = bool(
-                distutils.util.strtobool(query.get("insecure")))
+            hysteria["skip-cert-verify"] = _strtobool(query.get("insecure"))
 
             proxies.append(hysteria)
         elif scheme == "hysteria2" or scheme == "hy2":
@@ -100,8 +109,7 @@ async def ConvertsV2Ray(buf):
                 sni = get(query.get("peer"))
             if sni != "":
                 hysteria2["sni"] = sni
-            hysteria2["skip-cert-verify"] = bool(
-                distutils.util.strtobool(query.get("insecure")))
+            hysteria2["skip-cert-verify"] = _strtobool(query.get("insecure"))
             alpn = get(query.get("alpn"))
             if alpn != "":
                 hysteria2["alpn"] = alpn.split(",")
@@ -128,8 +136,7 @@ async def ConvertsV2Ray(buf):
             query = dict(urlparse.parse_qsl(urlTUIC.query))
 
             tuic = {}
-            tuic["name"] = uniqueName(
-                names, urlparse.unquote_plus(urlTUIC.fragment))
+            tuic["name"] = uniqueName(names, urlparse.unquote_plus(urlTUIC.fragment))
             tuic["type"] = scheme
             tuic["server"] = urlTUIC.hostname
             tuic["port"] = urlTUIC.port
@@ -173,8 +180,7 @@ async def ConvertsV2Ray(buf):
             trojan["port"] = urlTrojan.port
             trojan["password"] = urlTrojan.username
             trojan["udp"] = True
-            trojan["skip-cert-verify"] = bool(
-                distutils.util.strtobool(query.get("allowInsecure")))
+            trojan["skip-cert-verify"] = _strtobool(query.get("allowInsecure"))
 
             sni = get(query.get("sni"))
             if sni != "":
@@ -366,7 +372,7 @@ async def ConvertsV2Ray(buf):
                     continue
 
                 try:
-                    urlSS = urlparse.urlparse("ss://"+dcBuf)
+                    urlSS = urlparse.urlparse("ss://" + dcBuf)
                 except:
                     continue
 
@@ -486,7 +492,7 @@ async def ConvertsV2Ray(buf):
             password = get(query.get("pass"))
             if password != "":
                 tg["password"] = password
-            
+
             proxies.append(tg)
 
         elif scheme == "https":
@@ -519,7 +525,6 @@ async def ConvertsV2Ray(buf):
                 tg["passwork"] = password
 
             proxies.append(tg)
-
 
     if len(proxies) == 0:
         raise Exception("No valid proxies found")
