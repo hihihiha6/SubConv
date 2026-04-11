@@ -40,7 +40,7 @@ We ship two built-in templates in the root `template/` directory: `zju.yaml` and
 
 Local commands (requires [uv](https://docs.astral.sh/uv/) and [bun](https://bun.sh)):
 
-- Backend: `uv sync`, create/edit `config.yaml` if you need custom runtime settings, then `uv run python api.py`
+- Backend: `uv sync`, optionally copy `config.yaml.example` to `config.yaml` (recommended; the bundled `docker-compose.yml` requires it), edit it if needed, then `uv run python api.py`
 - Frontend: `cd mainpage && bun install && bun run dev`
 - Docs: `cd docs && bun install && bun run dev`
 
