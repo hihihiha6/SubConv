@@ -3,7 +3,6 @@ name: Build and push dev Docker image
 on:
   push:
     branches:
-      - main
       - dev
     paths:
       - '.github/workflows/build-image.yml'
@@ -11,6 +10,8 @@ on:
       - 'Dockerfile'
       - 'subconv/**'
       - 'mainpage/**'
+      - 'template/**'
+      - 'config.yaml.example'
       - 'api.py'
       - 'pyproject.toml'
       - 'uv.lock'

@@ -3,13 +3,13 @@ name: Build
 on:
   push:
     branches:
-      - '**'
-    tags-ignore:
-      - '**'
+      - dev
     paths:
       - '.github/workflows/build.yml'
       - 'subconv/**'
       - 'mainpage/**'
+      - 'template/**'
+      - 'config.yaml.example'
       - 'api.py'
       - 'pyproject.toml'
       - 'uv.lock'

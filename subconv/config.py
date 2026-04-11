@@ -38,6 +38,7 @@ class AppConfig(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8080
     DEFAULT_TEMPLATE: str = "zju"
+    DISALLOW_ROBOTS: bool = True
 
     @field_validator("DEFAULT_TEMPLATE")
     @classmethod

@@ -13,6 +13,7 @@ If you are running from a source checkout, put your changes in `config.yaml`. If
 - `HOST`: the bind address of the backend process
 - `PORT`: the listening port of the backend process
 - `DEFAULT_TEMPLATE`: the template used when `/sub` or `/proxy` omits the `template` query parameter
+- `DISALLOW_ROBOTS`: whether `/robots.txt` should return `Disallow: /` (defaults to `true`)
 
 Example `config.yaml`:
 
@@ -20,6 +21,7 @@ Example `config.yaml`:
 HOST: 0.0.0.0
 PORT: 8080
 DEFAULT_TEMPLATE: zju
+DISALLOW_ROBOTS: true
 ```
 
 ## Template File Items
@@ -39,18 +41,21 @@ DEFAULT_TEMPLATE: zju
         - 223.5.5.5
         - 8.8.8.8
         - 1.1.1.1
+        proxy-server-nameserver:
+        - https://dns.alidns.com/dns-query
         nameserver-policy:
           geosite:gfw,geolocation-!cn:
-          - https://1.1.1.1/dns-query
-          - https://1.0.0.1/dns-query
-          - https://8.8.8.8/dns-query
+            - https://1.1.1.1/dns-query#🚀 节点选择
+            - https://1.0.0.1/dns-query#🚀 节点选择
+            - https://8.8.8.8/dns-query#🚀 节点选择
         nameserver:
-        - https://223.5.5.5/dns-query
-        - https://1.12.12.12/dns-query
-        - https://8.8.8.8/dns-query
+        - https://dns.alidns.com/dns-query
+        - https://doh.pub/dns-query
+        - https://8.8.8.8/dns-query#🚀 节点选择
         fallback:
-        - https://1.1.1.1/dns-query
-        - https://8.8.8.8/dns-query
+        - https://1.1.1.1/dns-query#🚀 节点选择
+        - https://1.0.0.1/dns-query#🚀 节点选择
+        - https://8.8.8.8/dns-query#🚀 节点选择
         fallback-filter:
           geoip: false
           geoip-code: CN

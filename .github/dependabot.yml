@@ -1,12 +1,18 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
+  - package-ecosystem: "bun"
     directory: "/mainpage"
     target-branch: "dev"
     schedule:
       interval: "daily"
     open-pull-requests-limit: 10
-  - package-ecosystem: "pip"
+  - package-ecosystem: "bun"
+    directory: "/docs"
+    target-branch: "dev"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 10
+  - package-ecosystem: "uv"
     directory: "/"
     target-branch: "dev"
     schedule:

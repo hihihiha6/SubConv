@@ -8,7 +8,7 @@ It accepts GET requests. Here're the parameters:
 
 | Parameter | Description | Optional | Default | Remarks |
 | --- | --- | --- | --- | --- |
-| url | The URL of the original subscription or node sharing link. **It needs to be URIComponent encoded.** | No | - | Multiple subscription links are supported. You can use line breaks or "|" to separate them. |
+| url | The URL of the original subscription or node sharing link. **It needs to be URIComponent encoded.** | No | - | Multiple subscription links are supported. You can use line breaks or "\|" to separate them. `https://t.me/...` links are treated as standalone share links (parsed as V2Ray nodes), not as remote subscription URLs. |
 | template | Template ID used to render the final config. | Yes | zju | Built-in values are `zju` and `general`. When omitted, `zju` is used. |
 | interval | The interval of proxy update. | Yes | 1800 | Unit: seconds. |
 | urlstandby | The URL of the standby subscription or node sharing link. The proxies in it will only be added to the **manual switch group** (the group whose `"manual"` is `True` in the configuration file), and will not be classified into region groups. **It's recommended to be URIComponent encoded.** | Yes | - | Multiple subscription links are supported. You can use line breaks or "|" to separate them. |
@@ -23,6 +23,19 @@ It accepts GET requests. Here're the parameters:
 | Parameter | Description | Optional | Default | Remarks |
 | --- | --- | --- | --- | --- |
 | url | The URL of the original subscription. **It needs to be URIComponent encoded.** | No | - | Should be a single subscription link. |
+
+## GET /config
+This API returns the runtime configuration used by the Web UI. It accepts GET requests and takes no parameters.
+
+Response JSON fields:
+
+| Field | Description |
+| --- | --- |
+| defaultTemplate | The template name used when `/sub` or `/proxy` omits the `template` query parameter (from `DEFAULT_TEMPLATE` in `config.yaml`). |
+| availableTemplates | A list of all template names found in the `template/` directory. |
+
+## GET /robots.txt
+Returns a `robots.txt` response based on the `DISALLOW_ROBOTS` setting in `config.yaml`. When `DISALLOW_ROBOTS=true`, it returns `User-agent: * / Disallow: /`; otherwise it returns 404.
 
 ## GET /proxy
 This API is used to access the specified URL through this service.

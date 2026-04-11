@@ -8,7 +8,7 @@
 
 | 参数 | 描述 | 可选 | 默认值 | 备注 |
 | --- | --- | --- | --- | --- |
-| url | 原始订阅链接或节点分享链接。**需要进行URIComponent编码。** | 否 | - | 支持多个订阅链接。您可以使用换行符或"|"分隔它们。 |
+| url | 原始订阅链接或节点分享链接。**需要进行URIComponent编码。** | 否 | - | 支持多个订阅链接。您可以使用换行符或"\|"分隔它们。`https://t.me/...` 链接会被视为独立分享链接（按 V2Ray 节点解析），而非远程订阅 URL。 |
 | template | 用于渲染最终配置的模板 ID。 | 是 | zju | 当前内置值为 `zju` 和 `general`。不传时默认使用 `zju`。 |
 | interval | 代理更新间隔。 | 是 | 1800 | 单位：秒。 |
 | urlstandby | 备用订阅链接或节点分享链接。其中的代理将仅添加到**手动切换组**(配置文件中`"manual"`为`True`的组)中，并不会归类到区域组中。**建议进行URIComponent编码。** | 是 | - | 支持多个订阅链接。您可以使用换行符或"|"分隔它们。 |
@@ -22,6 +22,19 @@
 | 参数 | 描述 | 可选 | 默认值 | 备注 |
 | --- | --- | --- | --- | --- |
 | url | 原始订阅链接的URL。**需要进行URIComponent编码。** | 否 | - | 应为单个订阅链接。 |
+
+## GET /config
+此 API 返回 Web UI 所使用的运行时配置。它接受 GET 请求，不需要任何参数。
+
+响应 JSON 字段：
+
+| 字段 | 描述 |
+| --- | --- |
+| defaultTemplate | 当 `/sub` 或 `/proxy` 不带 `template` 查询参数时使用的模板名称（来自 `config.yaml` 中的 `DEFAULT_TEMPLATE`）。 |
+| availableTemplates | `template/` 目录下所有可用模板名称的列表。 |
+
+## GET /robots.txt
+根据 `config.yaml` 里的 `DISALLOW_ROBOTS` 配置返回 `robots.txt` 响应。当 `DISALLOW_ROBOTS=true` 时，返回 `User-agent: * / Disallow: /`；否则返回 404。
 
 ## GET /proxy
 此API用于通过本服务代理访问指定的URL。

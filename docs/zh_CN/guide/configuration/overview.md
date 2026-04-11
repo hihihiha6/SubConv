@@ -13,6 +13,7 @@
 - `HOST`：后端绑定地址
 - `PORT`：后端监听端口
 - `DEFAULT_TEMPLATE`：当 `/sub` 或 `/proxy` 不带 `template` 查询参数时使用的模板
+- `DISALLOW_ROBOTS`：是否让 `/robots.txt` 返回 `Disallow: /`（默认值为 `true`）
 
 示例 `config.yaml`：
 
@@ -20,6 +21,7 @@
 HOST: 0.0.0.0
 PORT: 8080
 DEFAULT_TEMPLATE: zju
+DISALLOW_ROBOTS: true
 ```
 
 ## 模板文件项
@@ -39,18 +41,21 @@ DEFAULT_TEMPLATE: zju
         - 223.5.5.5
         - 8.8.8.8
         - 1.1.1.1
+        proxy-server-nameserver:
+        - https://dns.alidns.com/dns-query
         nameserver-policy:
           geosite:gfw,geolocation-!cn:
-          - https://1.1.1.1/dns-query
-          - https://1.0.0.1/dns-query
-          - https://8.8.8.8/dns-query
+            - https://1.1.1.1/dns-query#🚀 节点选择
+            - https://1.0.0.1/dns-query#🚀 节点选择
+            - https://8.8.8.8/dns-query#🚀 节点选择
         nameserver:
-        - https://223.5.5.5/dns-query
-        - https://1.12.12.12/dns-query
-        - https://8.8.8.8/dns-query
+        - https://dns.alidns.com/dns-query
+        - https://doh.pub/dns-query
+        - https://8.8.8.8/dns-query#🚀 节点选择
         fallback:
-        - https://1.1.1.1/dns-query
-        - https://8.8.8.8/dns-query
+        - https://1.1.1.1/dns-query#🚀 节点选择
+        - https://1.0.0.1/dns-query#🚀 节点选择
+        - https://8.8.8.8/dns-query#🚀 节点选择
         fallback-filter:
           geoip: false
           geoip-code: CN

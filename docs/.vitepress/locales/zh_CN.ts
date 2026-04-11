@@ -3,7 +3,7 @@ import { defineConfig } from 'vitepress'
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   lang: 'zh-CN',
-  description: "又一个 Clash 订阅转换",
+  description: "又一个 mihomo 订阅转换",
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: nav(),
@@ -18,7 +18,7 @@ export default defineConfig({
     },
     footer: {
       message: '在 MPL-2.0 许可证下发布。',
-      copyright: 'Copyright © 2022-现在 wouiSB</a>'
+      copyright: 'Copyright © 2022-现在 wouiSB'
     }
   }
 })

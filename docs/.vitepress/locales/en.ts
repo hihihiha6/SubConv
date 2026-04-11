@@ -3,7 +3,7 @@ import { defineConfig } from 'vitepress'
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   lang: 'en-US',
-  description: "Yet Another Subscription Converter for Clash",
+  description: "Yet Another Subscription Converter for mihomo",
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: nav(),
