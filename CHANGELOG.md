@@ -1,5 +1,13 @@
 # Changelog
 
+## [v3.0.1] - 2026-04-16
+
+### Fixes
+
+- Fix Docker/Nuitka startup path resolution so onefile builds load external runtime files from the executable directory
+
+**Full Changelog**: https://github.com/SubConv/SubConv/compare/v3.0.0...v3.0.1
+
 ## [v3.0.0] - 2026-04-11
 
 ### Breaking Changes

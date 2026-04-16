@@ -10,3 +10,4 @@ dist/
 static/
 config.yaml
 .omx/
+.sisyphus/
