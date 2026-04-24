@@ -10,3 +10,5 @@ dist/
 static/
 config.yaml
 .omx/
+.sisyphus/
+.DS_Store

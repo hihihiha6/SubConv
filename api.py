@@ -6,8 +6,9 @@ from subconv.cli import main
 
 if __name__ == "__main__":
     import os
+    import sys
     from pathlib import Path
 
-    os.chdir(Path(__file__).resolve().parent)
+    os.chdir(Path(sys.argv[0]).resolve().parent)
 
     main()
