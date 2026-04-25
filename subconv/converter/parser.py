@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import base64
 import urllib.parse as urlparse
-from typing import Callable, Protocol
+from collections.abc import Sequence
+from typing import Callable, Protocol, cast
 
+from .anytls import parse_anytls
 from .hysteria import parse_hysteria
 from .hysteria2 import parse_hysteria2
 from .http_socks import parse_http_socks
+from .mieru import parse_mieru
 from .registry import NameRegistry
 from .shadowsocks import parse_ss
 from .shadowsocksr import parse_ssr
@@ -22,7 +25,8 @@ class ProxyModel(Protocol):
     def to_dict(self) -> dict[str, object]: ...
 
 
-ParserFn = Callable[[str, NameRegistry], ProxyModel | None]
+ParserResult = ProxyModel | Sequence[ProxyModel] | None
+ParserFn = Callable[[str, NameRegistry], ParserResult]
 
 
 async def ConvertsV2Ray(buf: bytes | str) -> list[dict[str, object]]:
@@ -56,8 +60,10 @@ async def ConvertsV2Ray(buf: bytes | str) -> list[dict[str, object]]:
 
         try:
             proxy = parser(line, registry)
-            if proxy is not None:
-                proxies.append(proxy.to_dict())
+            if isinstance(proxy, list):
+                proxies.extend(item.to_dict() for item in proxy)
+            elif proxy is not None:
+                proxies.append(cast(ProxyModel, proxy).to_dict())
         except ParseError:
             continue
 
@@ -96,4 +102,6 @@ _DISPATCH: dict[str, ParserFn] = {
     "socks5h": parse_http_socks,
     "http": parse_http_socks,
     "tg": parse_tg,
+    "anytls": parse_anytls,
+    "mierus": parse_mieru,
 }

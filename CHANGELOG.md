@@ -1,5 +1,26 @@
 # Changelog
 
+## [v3.1.0] - 2026-04-26
+
+### Features
+
+- Add AnyTLS and Mieru converters aligned with mihomo share-link parsing
+- Align VLESS XHTTP parsing with current mihomo converter behavior
+- Add AI proxy group to the default templates
+
+### Dependencies
+
+- Bump FastAPI 0.135.3 → 0.136.0
+- Bump pydantic-settings 2.13.1 → 2.14.0
+- Bump Vite 8.0.8 → 8.0.9 (frontend)
+- Bump @vitejs/plugin-vue 6.0.5 → 6.0.6 (frontend)
+
+### Documentation
+
+- Mention AnyTLS and Mieru support in the docs
+
+**Full Changelog**: https://github.com/SubConv/SubConv/compare/v3.0.1...v3.1.0
+
 ## [v3.0.1] - 2026-04-16
 
 ### Fixes

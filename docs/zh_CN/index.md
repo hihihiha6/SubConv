@@ -31,7 +31,7 @@ features:
   - title: 支持多个机场
     details: 它支持多个机场
   - title: 支持多种协议
-    details: 它支持多种协议，包括 SS、SSR、VMess、VLESS、Trojan 和 Hysteria。也支持 base64 格式的订阅
+    details: 它支持多种协议，包括 SS、SSR、VMess、VLESS、Trojan、Hysteria、AnyTLS 和 Mieru。也支持 base64 格式的订阅
   - title: 支持显示剩余流量
     details: 单订阅时支持显示剩余流量和用户信息
 ---

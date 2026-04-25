@@ -31,7 +31,7 @@ features:
   - title: Support Multiple Airports
     details: It supports multiple airports
   - title: Support Multiple Protocols
-    details: It supports multiple protocols, including SS, SSR, VMess, VLESS, Trojan, and Hysteria. Base64 subscriptions are also supported
+    details: It supports multiple protocols, including SS, SSR, VMess, VLESS, Trojan, Hysteria, AnyTLS, and Mieru. Base64 subscriptions are also supported
   - title: Support Display Remaining Traffic
     details: Support displaying remaining traffic and user information when there is only one subscription
 ---
