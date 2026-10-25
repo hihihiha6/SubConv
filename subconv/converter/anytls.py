@@ -6,7 +6,7 @@ from pydantic import Field
 
 from .models import MihomoBaseModel
 from .registry import NameRegistry
-from .util import ParseError
+from .util import ParseError, first_query_values
 
 
 class AnyTLSProxy(MihomoBaseModel):
@@ -44,8 +44,8 @@ def parse_anytls(line: str, registry: NameRegistry) -> AnyTLSProxy:
     if not password:
         raise ParseError("anytls: missing password")
 
-    query = dict(urlparse.parse_qsl(url.query))
-    name = urlparse.unquote_plus(url.fragment) or f"{url.hostname}:{url.port}"
+    query = first_query_values(url.query)
+    name = urlparse.unquote(url.fragment) or f"{url.hostname}:{url.port}"
 
     return AnyTLSProxy.model_validate(
         {

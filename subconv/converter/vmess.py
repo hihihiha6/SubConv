@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import binascii
 import json
+import re
 import urllib.parse as urlparse
-from importlib import import_module
 from json import JSONDecodeError
-from typing import Any, Callable, Protocol, runtime_checkable
+from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from .models import (
     ECHOpts,
@@ -17,17 +17,14 @@ from .models import (
     MihomoBaseModel,
     RealityOpts,
     WsOpts,
+    XhttpOpts,
 )
 from .registry import NameRegistry
-from .util import ParseError, base64_raw_std_decode
+from .util import INVALID_URL_ESCAPE, ParseError, base64_raw_std_decode, parse_go_int, parse_query
+from .vless import handle_v_share_link
 
 
 type ModelData = dict[str, Any]
-
-
-@runtime_checkable
-class _SupportsToDict(Protocol):
-    def to_dict(self) -> dict[str, Any]: ...
 
 
 class VmessProxy(MihomoBaseModel):
@@ -53,8 +50,9 @@ class VmessProxy(MihomoBaseModel):
     h2_opts: H2Opts | None = Field(None, alias="h2-opts")
     grpc_opts: GrpcOpts | None = Field(None, alias="grpc-opts")
     ws_opts: WsOpts | None = Field(None, alias="ws-opts")
+    xhttp_opts: XhttpOpts | None = Field(None, alias="xhttp-opts")
     packet_addr: bool | None = Field(None, alias="packet-addr")
-    xudp: bool = Field(True, alias="xudp")
+    xudp: bool | None = Field(None, alias="xudp")
     packet_encoding: str | None = Field(None, alias="packet-encoding")
     global_padding: bool | None = Field(None, alias="global-padding")
     authenticated_length: bool | None = Field(None, alias="authenticated-length")
@@ -65,27 +63,19 @@ class VmessProxy(MihomoBaseModel):
 
 
 def parse_vmess(line: str, registry: NameRegistry) -> VmessProxy:
-    body = line.removeprefix("vmess://")
-
+    body = line.partition("://")[2]
     try:
-        values = _parse_legacy_values(body)
-    except ParseError as exc:
-        if str(exc) != "vmess: legacy base64 decode failed":
-            raise
+        decoded = base64_raw_std_decode(body)
+    except (binascii.Error, UnicodeDecodeError):
         return _parse_aead(line, registry)
-
+    values = _parse_legacy_values(decoded)
     return VmessProxy.model_validate(_build_legacy_kwargs(values, registry))
 
 
-def _parse_legacy_values(body: str) -> dict[str, Any]:
-    try:
-        decoded = base64_raw_std_decode(body)
-    except (binascii.Error, UnicodeDecodeError) as exc:
-        raise ParseError("vmess: legacy base64 decode failed") from exc
-
+def _parse_legacy_values(decoded: str) -> dict[str, Any]:
     try:
         values = json.loads(decoded)
-    except JSONDecodeError as exc:
+    except (JSONDecodeError, RecursionError) as exc:
         raise ParseError("vmess: invalid legacy json") from exc
 
     if not isinstance(values, dict):
@@ -142,10 +132,9 @@ def _build_legacy_kwargs(values: dict[str, Any], registry: NameRegistry) -> Mode
             {"path": [path or "/"], "headers": headers}
         )
     elif network == "h2":
-        h2_headers: dict[str, list[str]] = {}
-        if host:
-            h2_headers["Host"] = [host]
-        kwargs["h2_opts"] = H2Opts.model_validate({"path": path, "headers": h2_headers})
+        kwargs["h2_opts"] = H2Opts.model_validate(
+            {"path": path or "/", "host": [host] if host else None}
+        )
     elif network in {"ws", "httpupgrade"}:
         kwargs["ws_opts"] = _build_ws_opts(path, host, network)
     elif network == "grpc":
@@ -166,12 +155,28 @@ def _build_ws_opts(path: str | None, host: str | None, network: str) -> WsOpts:
     }
 
     if path:
-        parsed = urlparse.urlparse(path)
-        query = dict(urlparse.parse_qsl(parsed.query))
+        # net/url rejects controls before the fragment, invalid authority ports
+        # and colons in the first segment of a relative URL. Python is looser.
+        if re.search(r'[\x00-\x1f\x7f]', path.partition('#')[0]):
+            return WsOpts.model_validate(opts_kwargs)
+        try:
+            parsed = urlparse.urlparse(path)
+        except ValueError:
+            return WsOpts.model_validate(opts_kwargs)
+        if not parsed.scheme and ':' in parsed.path.partition('/')[0]:
+            return WsOpts.model_validate(opts_kwargs)
+        authority = parsed.netloc.rsplit('@', 1)[-1]
+        port = authority.rsplit(':', 1)[-1] if ':' in authority and not authority.endswith(']') else ''
+        if re.search(r'[ <>"{}|\\^`]', authority) or (port and not re.fullmatch(r'[0-9]+', port)):
+            return WsOpts.model_validate(opts_kwargs)
+        # Go leaves malformed URL paths untouched, including their ed/eh.
+        if any(INVALID_URL_ESCAPE.search(part) for part in (parsed.path, parsed.params, parsed.fragment)):
+            return WsOpts.model_validate(opts_kwargs)
+        query = parse_query(parsed.query, errors='surrogateescape')
 
-        if early_data := query.get("ed"):
+        if early_data := query.get("ed", [""])[0]:
             try:
-                ed_int = int(early_data)
+                ed_int = parse_go_int(early_data)
             except ValueError:
                 pass
             else:
@@ -182,72 +187,35 @@ def _build_ws_opts(path: str | None, host: str | None, network: str) -> WsOpts:
                     opts_kwargs["v2ray-http-upgrade-fast-open"] = True
 
                 query.pop("ed", None)
-                parsed = parsed._replace(query=urlparse.urlencode(query))
-                opts_kwargs["path"] = parsed.geturl() or ws_path
+                items = sorted(query.items(), key=lambda item: item[0].encode('utf-8', errors='surrogateescape'))
+                encoded_query = urlparse.urlencode(items, doseq=True, errors='surrogateescape')
+                prefix, _, fragment = path.partition('#')
+                prefix = prefix.partition('?')[0]
+                if parsed.scheme:
+                    prefix = parsed.scheme + prefix[len(parsed.scheme):]
+                # Preserve raw leading slashes and an empty path. geturl()
+                # collapses ///a, and falling back to ws_path restores ed.
+                if not parsed.scheme or prefix[len(parsed.scheme) + 1:].startswith('/'):
+                    prefix = urlparse.quote(prefix, safe="/:@!$&'()*+,;=-._~[]%")
+                fragment = urlparse.quote(fragment, safe="/?:@!$&'()*+,;=-._~[]%")
+                opts_kwargs["path"] = prefix + ('?' + encoded_query if encoded_query else '') + ('#' + fragment if fragment else '')
 
-        if early_header := query.get("eh"):
-            opts_kwargs["early-data-header-name"] = early_header
+        if early_header := query.get("eh", [""])[0]:
+            opts_kwargs["early-data-header-name"] = early_header.encode('utf-8', errors='surrogateescape').decode('utf-8', errors='replace')
 
     return WsOpts.model_validate(opts_kwargs)
 
 
 def _parse_aead(line: str, registry: NameRegistry) -> VmessProxy:
     url = urlparse.urlparse(line)
-    if not url.hostname or not url.port:
-        raise ParseError("vmess: missing host or port")
+    query = parse_query(url.query)
+    kwargs = handle_v_share_link(url, registry, "vmess", query)
 
-    share_link = _load_handle_v_share_link()(url, registry, "vless")
-    query = dict(urlparse.parse_qsl(url.query))
-    kwargs = _normalize_share_link(share_link)
-
-    kwargs["type"] = "vmess"
     kwargs["alter_id"] = 0
-    kwargs["cipher"] = query.get("encryption") or "auto"
-    kwargs.setdefault("udp", True)
-    kwargs.setdefault("tls", False)
-    kwargs.setdefault("xudp", True)
-    kwargs.setdefault("skip_cert_verify", False)
+    encryption = query.get("encryption")
+    kwargs["cipher"] = encryption[0] if encryption and encryption[0] else "auto"
 
     return VmessProxy.model_validate(kwargs)
-
-
-def _normalize_share_link(share_link: object) -> ModelData:
-    """Convert v share link result to a dict with Python field names.
-
-    ``handle_v_share_link`` returns Python field names (e.g. ``ws_opts``
-    not ``ws-opts``), so we only need to handle ``alterId`` and strip
-    VLESS-only fields (``flow``, ``encryption``).
-    """
-    if isinstance(share_link, dict):
-        data: ModelData = dict(share_link)
-    elif isinstance(share_link, BaseModel):
-        data = dict(share_link.model_dump())
-    elif isinstance(share_link, _SupportsToDict):
-        data = dict(share_link.to_dict())
-    else:
-        raise ParseError("vmess: invalid v share link result")
-
-    if "alterId" in data:
-        data["alter_id"] = data.pop("alterId")
-
-    for key in ("flow", "encryption"):
-        data.pop(key, None)
-
-    return data
-
-
-def _load_handle_v_share_link() -> Callable[
-    [urlparse.ParseResult, NameRegistry, str], object
-]:
-    try:
-        module = import_module("subconv.converter.vless")
-    except ModuleNotFoundError as exc:
-        raise ParseError("vmess: missing vless handler") from exc
-
-    handler = getattr(module, "handle_v_share_link", None)
-    if not callable(handler):
-        raise ParseError("vmess: missing vless handler")
-    return handler
 
 
 def _parse_port(value: Any) -> int:

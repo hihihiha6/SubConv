@@ -13,7 +13,7 @@ from pydantic import Field
 
 from .models import GrpcOpts, MihomoBaseModel, WsOpts
 from .registry import NameRegistry
-from .util import ParseError, rand_user_agent
+from .util import ParseError, first_query_values, parse_optional_bool, rand_user_agent
 
 
 class TrojanProxy(MihomoBaseModel):
@@ -43,18 +43,18 @@ def parse_trojan(line: str, registry: NameRegistry) -> TrojanProxy:
     if not url.username:
         raise ParseError("trojan: missing password")
 
-    query = dict(urlparse.parse_qsl(url.query))
+    query = first_query_values(url.query)
 
     kwargs: dict[str, object] = {
-        "name": registry.register(urlparse.unquote_plus(url.fragment)),
+        "name": registry.register(urlparse.unquote(url.fragment)),
         "type": "trojan",
         "server": url.hostname,
         "port": url.port,
-        "password": url.username,
+        "password": urlparse.unquote(url.username),
     }
 
     if query.get("allowInsecure"):
-        kwargs["skip_cert_verify"] = _parse_bool(query.get("allowInsecure"))
+        kwargs["skip_cert_verify"] = parse_optional_bool(query["allowInsecure"]) or False
 
     if sni := query.get("sni"):
         kwargs["sni"] = sni
@@ -84,9 +84,3 @@ def parse_trojan(line: str, registry: NameRegistry) -> TrojanProxy:
         kwargs["fingerprint"] = pcs
 
     return TrojanProxy.model_validate(kwargs)
-
-
-def _parse_bool(val: str | None) -> bool:
-    if val is None:
-        return False
-    return val.lower() in ("1", "true", "yes")
